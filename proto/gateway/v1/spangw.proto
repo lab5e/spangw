@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package gateway.v1;
+
+option go_package = "./gateway";
+
+
+// Config request is sent from the gateway when it starts up
+message ConfigRequest {};
+
+// Keepalive messages are sent by the client to check the status of the connection. 
+message Keepalive {};
+// The keepalive response is sent by Span in response to the Keepalive message
+message KeepaliveResponse {};
+
+// Configuration update for devices. THe gateway must use map this device ID to whatever device is on the
+// other side.
+message DeviceConfigUpdate {
+    string device_id = 1;
+    map<string, string> config = 2;
+    map<string, string> tags = 3;    
+};
+
+// The gateway is responsible for updating the gateway configuration
+message GatewayConfigUpdate {
+    string gateway_id = 1;
+    map<string,string> config = 2;
+    map<string, string> tags = 3;
+};
+
+// This message is sent when a device is removed via the API
+message DeviceRemoved {
+    string device_id = 1;
+};
+
+// This message is sent when a downstream message is created via the API
+message DownstreamMessage {
+    string message_id = 1;
+    string device_id = 2;
+    bytes payload = 3;
+};
+
+// Upstream messages are fairly simple; they have a device ID, a payload and (optional) metadata
+message UpstreamMessage {
+    string device_id = 1;
+    bytes payload = 2;
+    map<string,string> metadata = 3;
+};
+
+// The gateway metadata may include relevant metadata for the gateway. This is exposed via the API.
+message GatewayMetadataUpdate {
+    map<string,string> metadata = 1;
+};
+
+// Device updates from the gateway. If the device configuration is updated on the gateway this will update
+// both the configuration and the metadata. Typically for LoRa gateways this means the AppSKey, NwkSKey, AppKey
+// and frame counters on the device itself and RSSI/SND/frequency/gateway EUI on the metadata.
+message DeviceUpdate {
+    string device_id = 1;
+    map<string,string> config = 2;
+    map<string,string> metadata = 3;
+};
+
+// Control request message. This is sent by the gateway to Span
+message ControlStreamRequest {
+    oneof msg {
+        ConfigRequest config  = 1;
+        UpstreamMessage upstream_message = 2;
+        Keepalive keepalive = 3;
+        GatewayMetadataUpdate gateway_metadata = 4;
+        DeviceUpdate device_update = 5;
+    };
+};
+
+// Control response message. This is sent from Span to the gateway
+message ControlStreamResponse {
+    oneof msg {
+        DeviceConfigUpdate device_update = 1;
+        GatewayConfigUpdate gateway_update = 2;
+        DeviceRemoved device_removed = 3;
+        DownstreamMessage downstream_message = 4;
+        KeepaliveResponse keepalive_response = 5;
+    };
+};
+
+// The UserGateway service handles user-managed gateways
+service UserGatewayService {
+    rpc ControlStream(stream ControlStreamRequest) returns (stream ControlStreamResponse);
+};

@@ -1,0 +1,7 @@
+version: v1beta1
+name: buf.build/lab5e/span
+deps:
+  - buf.build/googleapis/googleapis
+build:
+  roots:
+    - proto
