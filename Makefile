@@ -3,7 +3,7 @@
 all: vet build
 
 run: build
-	bin/gwemu --cert-file=clientcert.crt --chain=chain.crt --key-file=private.key
+	bin/gwemu --cert-file=clientcert.crt --chain=chain.crt --key-file=private.key --span-endpoint=localhost:64964
 
 vet:
 	go vet ./...

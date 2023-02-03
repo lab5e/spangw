@@ -10,6 +10,7 @@ import (
 
 	"github.com/lab5e/spangw/pkg/gw"
 	"github.com/lab5e/spangw/pkg/lg"
+	"github.com/lab5e/spangw/pkg/stdgw"
 )
 
 // New creates a new command handler that emulates devices on a gateway
@@ -70,8 +71,8 @@ func (e *emulatorHandler) UpdateDevice(localID string, localDeviceID string, con
 		}
 		e.devices = append(e.devices, d)
 
-		config["fCntUp"] = "99"
-		config["appSKey"] = "the secret thing"
+		config[stdgw.LoraFCntUp] = "99"
+		config[stdgw.LoraFCntDn] = "9"
 		lg.Info("Added device %+v", d)
 		return d.id, config, nil
 	}

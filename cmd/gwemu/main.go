@@ -20,7 +20,6 @@ func main() {
 		lg.Error("Error creating gateway: %v", err)
 		os.Exit(2)
 	}
-
 	defer gwHandler.Stop()
 	if err := gwHandler.Run(); err != nil {
 		lg.Error("Could not run the gateway process: %v", err)
