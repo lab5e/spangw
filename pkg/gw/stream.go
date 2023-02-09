@@ -150,7 +150,9 @@ func (sp *GatewayProcess) Run() error {
 			}
 
 		case err := <-errorCh:
-			close(sp.upstreamRequests)
+			if sp.upstreamRequests != nil {
+				close(sp.upstreamRequests)
+			}
 			return err
 
 		case <-time.After(10 * time.Second):
