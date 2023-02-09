@@ -6,5 +6,5 @@ type Parameters struct {
 	Chain        string `kong:"help='Certificate chain',required,file"`
 	KeyFile      string `kong:"help='Client key file',required,file"`
 	StateFile    string `kong:"help='State file for gateway',default=''"`
-	SpanEndpoint string `kong:"help='Endpoint for the Span service',default='gw.lab5e.com:6673'"`
+	SpanEndpoint string `kong:"help='Endpoint for the Span service',default='gw.lab5e.com:6674'"`
 }
