@@ -111,7 +111,7 @@ func (e *emulatorHandler) generateUpstream() {
 	for {
 		time.Sleep(30 * time.Second)
 		e.mutex.Lock()
-		if e.upstreamCb != nil {
+		if e.upstreamCb != nil && len(e.devices) > 0 {
 			ix := rand.Intn(len(e.devices))
 			lg.Info("Generating upstream message for device %s", e.devices[ix].id)
 			e.upstreamCb(e.devices[ix].id, []byte(fmt.Sprintf("msg %d", count)), map[string]string{
