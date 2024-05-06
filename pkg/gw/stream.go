@@ -1,9 +1,10 @@
 package gw
 
 import (
+	"fmt"
+	"log/slog"
 	"time"
 
-	"github.com/lab5e/spangw/pkg/lg"
 	"github.com/lab5e/spangw/pkg/pb/gateway/v1"
 )
 
@@ -76,7 +77,7 @@ func (sp *GatewayProcess) Run() error {
 	sp.Commands.UpstreamMessage(func(localDeviceID string, payload []byte, metadata map[string]string) {
 		deviceID := state.GetReverseMapping(localDeviceID)
 		if deviceID == "" {
-			lg.Error("Can't process upstream message. The local device ID %s is not known. Ignoring", localDeviceID)
+			slog.Error("Can't process upstream message. The local device ID is unnknown. Ignoring", "localID", localDeviceID)
 			return
 		}
 		upstreamRequests <- &gateway.ControlStreamRequest{
@@ -100,7 +101,7 @@ func (sp *GatewayProcess) Run() error {
 				state.GatewayID = msg.GatewayUpdate.GatewayId
 				localID, err := sp.Commands.UpdateConfig(state.LocalID, msg.GatewayUpdate.Config)
 				if err != nil {
-					lg.Error("Error updating gateway configuration: %v", err)
+					slog.Error("Error updating gateway configuration", "error", err)
 					continue
 				}
 				state.LocalID = localID
@@ -108,19 +109,19 @@ func (sp *GatewayProcess) Run() error {
 
 			case *gateway.ControlStreamResponse_DeviceRemoved:
 				if err := sp.Commands.RemoveDevice(state.LocalID, state.GetMapping(msg.DeviceRemoved.DeviceId)); err != nil {
-					lg.Error("Error removing device %s: %v", msg.DeviceRemoved.DeviceId, err)
+					slog.Error("Error removing device ", "deviceID", msg.DeviceRemoved.DeviceId, "error", err)
 					continue
 				}
 				state.RemoveMapping(msg.DeviceRemoved.DeviceId)
 
 			case *gateway.ControlStreamResponse_DeviceUpdate:
 				if state.LocalID == "" {
-					lg.Error("No local ID is set for the device. Will ignore the update command")
+					slog.Error("No local ID is set for the device. Will ignore the update command")
 					continue
 				}
 				localDeviceID, newConfig, err := sp.Commands.UpdateDevice(state.LocalID, state.GetMapping(msg.DeviceUpdate.DeviceId), msg.DeviceUpdate.Config)
 				if err != nil {
-					lg.Error("Error updating device %s: %v", msg.DeviceUpdate.DeviceId, err)
+					slog.Error("Error updating device", "deviceID", msg.DeviceUpdate.DeviceId, "error", err)
 					continue
 				}
 				state.SetMapping(msg.DeviceUpdate.DeviceId, localDeviceID)
@@ -142,11 +143,11 @@ func (sp *GatewayProcess) Run() error {
 					state.GetMapping(msg.DownstreamMessage.DeviceId),
 					msg.DownstreamMessage.MessageId,
 					msg.DownstreamMessage.Payload); err != nil {
-					lg.Error("Error sending message %s to device %s: %v", msg.DownstreamMessage.MessageId, msg.DownstreamMessage.DeviceId, err)
+					slog.Error("Error sending message to device", "messageID", msg.DownstreamMessage.MessageId, "deviceID", msg.DownstreamMessage.DeviceId, "error", err)
 				}
 
 			default:
-				lg.Warning("Unknown message from server: %T", res.Msg)
+				slog.Warn("Unknown message from server", "type", fmt.Sprintf("%T", res.Msg))
 			}
 
 		case err := <-errorCh:

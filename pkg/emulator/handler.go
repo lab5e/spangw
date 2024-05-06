@@ -3,13 +3,13 @@ package emulator
 import (
 	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"strconv"
 	"sync"
 	"time"
 
 	"github.com/lab5e/spangw/pkg/gw"
-	"github.com/lab5e/spangw/pkg/lg"
 	"github.com/lab5e/spangw/pkg/stdgw"
 )
 
@@ -39,7 +39,7 @@ type emulatorHandler struct {
 
 func (e *emulatorHandler) UpdateConfig(localID string, config map[string]string) (string, error) {
 	e.gatewayConfig = config
-	lg.Info("Updated config to %+v", config)
+	slog.Info("Updated gateway config", "config", config)
 	if localID == "" {
 		return "1", nil
 	}
@@ -52,7 +52,7 @@ func (e *emulatorHandler) RemoveDevice(localID string, deviceID string) error {
 	for i, d := range e.devices {
 		if d.id == deviceID {
 			e.devices = append(e.devices[:i], e.devices[i+1:]...)
-			lg.Info("removed device %s", localID)
+			slog.Info("removed device", "localID", localID)
 			return nil
 		}
 	}
@@ -73,14 +73,14 @@ func (e *emulatorHandler) UpdateDevice(localID string, localDeviceID string, con
 
 		config[stdgw.LoraFCntUp] = "99"
 		config[stdgw.LoraFCntDn] = "9"
-		lg.Info("Added device %+v", d)
+		slog.Info("Added device", "device", d)
 		return d.id, config, nil
 	}
 
 	for i, d := range e.devices {
 		if d.id == localID {
 			e.devices[i].config = config
-			lg.Info("Updated device %s: %+v", d.id, d)
+			slog.Info("Updated device", "device", d)
 			return d.id, nil, nil
 		}
 	}
@@ -92,7 +92,7 @@ func (e *emulatorHandler) DownstreamMessage(localID, localDeviceID, messageID st
 	defer e.mutex.Unlock()
 	for i, d := range e.devices {
 		if d.id == localDeviceID {
-			lg.Info("Got downstream message (%d bytes) for device %s", len(payload), d.id)
+			slog.Info("Got downstream message", "deviceID", d.id, "payloadLength", len(payload))
 			e.devices[i].messages = append(e.devices[i].messages, hex.EncodeToString(payload))
 			return nil
 		}
@@ -113,7 +113,7 @@ func (e *emulatorHandler) generateUpstream() {
 		e.mutex.Lock()
 		if e.upstreamCb != nil && len(e.devices) > 0 {
 			ix := rand.Intn(len(e.devices))
-			lg.Info("Generating upstream message for device %s", e.devices[ix].id)
+			slog.Info("Generating upstream message for device", "id", e.devices[ix].id)
 			e.upstreamCb(e.devices[ix].id, []byte(fmt.Sprintf("msg %d", count)), map[string]string{
 				"rssi":   strconv.FormatInt(int64(count), 10),
 				"fCntUp": strconv.FormatInt(int64(count), 10),
