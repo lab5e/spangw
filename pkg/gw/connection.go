@@ -14,7 +14,7 @@ import (
 // Create creates a new gateway process, connects to the Span service and launches the command
 // processing. The handler implements the actual gateway
 func Create(config Parameters, handler CommandHandler) (*GatewayProcess, error) {
-	creds, err := loadCertificates(config.CertFile, config.Chain, config.KeyFile)
+	creds, err := loadCertificates(config.CertFile, config.KeyFile)
 	if err != nil {
 		return nil, err
 	}
@@ -36,8 +36,8 @@ func Create(config Parameters, handler CommandHandler) (*GatewayProcess, error) 
 	return NewGatewayProcess(config.StateFile, stream, handler), nil
 }
 
-func loadCertificates(certFile, chainFile, keyFile string) (credentials.TransportCredentials, error) {
-	certs, err := os.ReadFile(chainFile)
+func loadCertificates(certFile, keyFile string) (credentials.TransportCredentials, error) {
+	certs, err := os.ReadFile(certFile)
 	if err != nil {
 		return nil, err
 	}
